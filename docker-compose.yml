@@ -1,0 +1,49 @@
+services:
+  user-services:
+    build: ./user-services
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/user-services
+      - RABBITMQ_URI=amqp://rabbitmq:5672
+    depends_on:
+      - mongodb
+      - rabbitmq
+
+  products-services:
+    build: ./products-services
+    ports:
+      - "3001:3001"
+    environment:
+      - MONGO_URI=mongodb://mongodb:27017/products-services
+      - RABBITMQ_URI=amqp://rabbitmq:5672
+    depends_on:
+      - mongodb
+      - rabbitmq
+
+  api-gate:
+    build: ./api-gate
+    ports:
+      - "8000:8000"
+    environment:
+      - USER_SERVICE_URL=http://user-services:3000
+      - PRODUCT_SERVICE_URL=http://products-services:3001
+    depends_on:
+      - user-services
+      - products-services
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+  rabbitmq:
+    image: rabbitmq:management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+volumes:
+  mongo-data:
